@@ -4,11 +4,13 @@ const connectDB = require('./config/db');
 const { errorHandler } = require('./utils/errorHandler');
 const quizRoutes = require('./routes/quizRoutes');
 const userRoutes = require('./routes/userRoutes');
+const cors = require('cors');
 
 dotenv.config();
 connectDB();
 
 const app = express();
+app.use(cors())
 
 app.use(express.json());
 

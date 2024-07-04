@@ -1,37 +1,41 @@
 const Quiz = require('../models/Quiz');
+const errorHandler = require('../utils/errorHandler');
 
-const createQuiz = async (req, res) => {
-    const { title, questions } = req.body;
-
-    try {
-        const quiz = new Quiz({ title, questions, user: req.user.id });
-        await quiz.save();
-        res.status(201).json(quiz);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+exports.createQuiz = async (req, res) => {
+  const { title, questions } = req.body;
+  try {
+    const quiz = new Quiz({ title, questions });
+    await quiz.save();
+    res.status(201).json({ success: true, data: quiz });
+  } catch (err) {
+    errorHandler(err, res);
+  }
 };
 
-const getQuizzes = async (req, res) => {
-    try {
-        const quizzes = await Quiz.find();
-        res.json(quizzes);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+exports.getQuizzes = async (req, res) => {
+  try {
+    const quizzes = await Quiz.find();
+    res.status(200).json({ success: true, data: quizzes });
+  } catch (err) {
+    errorHandler(err, res);
+  }
 };
 
-const takeQuiz = async (req, res) => {
-    const { answers } = req.body;
-    try {
-        const quiz = await Quiz.findById(req.params.id);
-        const score = quiz.questions.reduce((score, question, index) => {
-            return question.correctAnswer === answers[index] ? score + 1 : score;
-        }, 0);
-        res.json({ score, total: quiz.questions.length });
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+exports.takeQuiz = async (req, res) => {
+  const { quizId, answers } = req.body;
+  try {
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
+    let score = 0;
+    quiz.questions.forEach((question, index) => {
+      if (question.correctAnswer === answers[index]) {
+        score += 1;
+      }
+    });
+    res.status(200).json({ success: true, score });
+  } catch (err) {
+    errorHandler(err, res);
+  }
 };
-
-module.exports = { createQuiz, getQuizzes, takeQuiz };
